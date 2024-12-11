@@ -1,6 +1,9 @@
 use Maze::*;
 
-
+enum Exploration {
+    Explored,
+    UnExplored,
+}
 
 enum Maze<'a> {
     Branch {
