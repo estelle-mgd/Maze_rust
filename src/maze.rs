@@ -1,4 +1,4 @@
-use crate::maze::Maze::Leaf;
+use crate::maze::Maze::{Branch, Leaf};
 
 enum Maze<'a> {
     Branch {
@@ -12,6 +12,13 @@ enum Maze<'a> {
     },
 }
 
+impl Maze< > {
+
+    fn newLeaf(label: String) -> Maze< > {Leaf { label: label } }
+
+    fn newBranch(label: String, left: & Maze < >, right: & Maze < >) -> Maze< > {Branch { label: label, left: left, right: right } }
+
+}
 pub fn main() {
     let leaf2 = Maze::Leaf {label: format!("2")};
     let leaf4 = Maze::Leaf {label: format!("4")};
@@ -22,4 +29,5 @@ pub fn main() {
     let branch7 = Maze::Branch{label: format!("7"), left: &leaf5, right: &leaf8};
     let branch6 = Maze::Branch{label: format!("6"), left: &branch3, right: &branch7};
     let branch0 = Maze::Branch{label: format!("0"), left: &branch1, right: &branch6};
+    println!("labyrinthe créé");
 }
