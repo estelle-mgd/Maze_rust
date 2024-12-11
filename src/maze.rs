@@ -1,4 +1,9 @@
-use crate::maze::Maze::{Branch, Leaf};
+use Maze::*;
+
+enum Exploration {
+    Explored,
+    UnExplored,
+}
 
 enum Maze<'a> {
     Branch {
@@ -19,6 +24,16 @@ impl Maze< > {
     fn newBranch(label: String, left: & Maze < >, right: & Maze < >) -> Maze< > {Branch { label: label, left: left, right: right } }
 
 }
+
+impl<'a> Maze<'a> {
+    fn explore(&self, trace: &mut Vec<String>) {
+        match self {
+            Branch {label, left, right} => {trace.push(label.clone()); left.explore(trace); right.explore(trace); }
+            Leaf { label } => {trace.push(label.clone()); }
+        }
+    }
+}
+
 pub fn main() {
     let leaf2 = Maze::Leaf {label: format!("2")};
     let leaf4 = Maze::Leaf {label: format!("4")};
@@ -30,4 +45,8 @@ pub fn main() {
     let branch6 = Maze::Branch{label: format!("6"), left: &branch3, right: &branch7};
     let branch0 = Maze::Branch{label: format!("0"), left: &branch1, right: &branch6};
     println!("labyrinthe créé");
+
+    let mut trace: Vec<String> = Vec::new();
+    branch0.explore(&mut trace);
+    println!("{:?}", trace);
 }
