@@ -12,7 +12,7 @@ enum Maze<'a> {
     },
 }
 
-fn main() {
+pub fn main() {
     let leaf2 = Maze::Leaf {label: format!("2")};
     let leaf4 = Maze::Leaf {label: format!("4")};
     let leaf5 = Maze::Leaf {label: format!("5")};
