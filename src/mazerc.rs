@@ -4,7 +4,6 @@ use std::rc::Rc;
 #[derive(Debug, Clone)]
 enum Exploration {
     UnExplored,
-    LeftExplored,
     Explored,
 }
 
@@ -52,32 +51,20 @@ impl Maze {
                 let current_status = status.borrow().clone();
                 match current_status {
                     Exploration::UnExplored => {
-                        // Transition to LeftExplored
-                        {
-                            let mut status_mut = status.borrow_mut();
-                            *status_mut = Exploration::LeftExplored;
-                        }
-                        stack.push(maze.clone());
-                        Maze::explore(left.clone(), stack, {
-                            labels.push(label.clone());
-                            labels
-                        })
-                    }
-                    Exploration::LeftExplored => {
-                        // Transition to Explored
                         {
                             let mut status_mut = status.borrow_mut();
                             *status_mut = Exploration::Explored;
                         }
-                        Maze::explore(right.clone(), stack, {
-                            //labels.push(label.clone());
-                            labels
-                        })
+                        // Ajouter le sous-arbre droit à la pile, puis explorer le gauche
+                        stack.push(right.clone());
+                        stack.push(left.clone());
+                        labels.push(label.clone());
+                        (stack, labels)
                     }
                     Exploration::Explored => {
                         labels.push(label.clone());
                         (stack, labels)
-                    }
+                    },
                 }
             }
             Maze::Leaf { label } => {
@@ -115,8 +102,8 @@ fn maze() -> Rc<RefCell<Maze>> {
 }
 
 pub fn main() {
-        let root = maze();
+    let root = maze();
 
-        let (_, labels) = loop_explore((vec![root.clone()], vec![]));
-        println!("Explored nodes: {:?}", labels);
-    }
+    let (_, labels) = loop_explore((vec![root.clone()], vec![]));
+    println!("Explored nodes: {:?}", labels);
+}
