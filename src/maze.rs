@@ -1,3 +1,6 @@
+use std::cell::RefCell;
+use std::cmp::PartialEq;
+use std::ops::Deref;
 use Maze::*;
 use Exploration::*;
 
@@ -11,11 +14,21 @@ enum Maze<'a> {
         label: String,
         left: &'a Maze<'a>,
         right: &'a Maze<'a>,
-        status: Exploration,
+        status: RefCell<Exploration>,
     },
     Leaf {
         label: String,
     },
+}
+
+impl PartialEq for Exploration {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (UnExplored, UnExplored) => true,
+            (Explored, Explored) => true,
+            _ => false,
+        }
+    }
 }
 
 impl<'a> Maze<'a> {
@@ -23,8 +36,25 @@ impl<'a> Maze<'a> {
     fn newLeaf(label: String) -> Self {Leaf { label: label } }
 
     fn newBranch(label: String, left: &'a Maze <'a>, right: &'a Maze <'a>) -> Self {
-        Branch { label, left, right, status: UnExplored }
+        Branch { label, left, right, status: RefCell::new(UnExplored) }
     }
+
+    fn explore(&self, trace: &mut Vec<String>) {
+        match self {
+            Branch {label, left, right, status} => {
+                if *status.borrow() == UnExplored {
+                    status.replace(Explored); trace.push(label.clone()); left.explore(trace); right.explore(trace);
+                }
+                else {
+                    trace.push(label.clone());
+                };
+            }
+            Leaf { label } => {trace.push(label.clone()); }
+        }
+    }
+
+
+
 
 }
 
@@ -50,6 +80,6 @@ pub fn main() {
     println!("labyrinthe créé");
 
     let mut trace: Vec<String> = Vec::new();
-    //branch0.explore(&mut trace);
-    //println!("{:?}", trace);
+    branch0.explore(&mut trace);
+    println!("{:?}", trace);
 }
