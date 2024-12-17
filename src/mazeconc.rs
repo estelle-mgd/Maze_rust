@@ -1,5 +1,5 @@
 use std::cell::RefCell;
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 enum Exploration {
@@ -12,8 +12,8 @@ enum Exploration {
 enum Maze {
     Branch {
         label: String,
-        left: Rc<Maze>,
-        right: Rc<Maze>,
+        left: Arc<Maze>,
+        right: Arc<Maze>,
         status: RefCell<Exploration>,
     },
     Leaf {
@@ -22,8 +22,8 @@ enum Maze {
 }
 
 impl Maze {
-    fn new_branch(label: &str, left: Rc<Maze>, right: Rc<Maze>) -> Rc<Maze> {
-        Rc::new(Maze::Branch {
+    fn new_branch(label: &str, left: Arc<Maze>, right: Arc<Maze>) -> Arc<Maze> {
+        Arc::new(Maze::Branch {
             label: label.to_string(),
             left,
             right,
@@ -31,8 +31,8 @@ impl Maze {
         })
     }
 
-    fn new_leaf(label: &str) -> Rc<Maze> {
-        Rc::new(Maze::Leaf {
+    fn new_leaf(label: &str) -> Arc<Maze> {
+        Arc::new(Maze::Leaf {
             label: label.to_string(),
         })
     }
@@ -45,8 +45,8 @@ impl Maze {
     }
 
     fn explore(
-        self: &Rc<Maze>,
-        work: &mut Vec<Rc<Maze>>,
+        self: &Arc<Maze>,
+        work: &mut Vec<Arc<Maze>>,
         trace: &mut Vec<String>,
     ) {
         match &**self {
@@ -84,7 +84,7 @@ impl Maze {
     }
 }
 
-fn maze() -> Rc<Maze> {
+fn maze() -> Arc<Maze> {
     let leaf2 = Maze::new_leaf("2");
     let leaf4 = Maze::new_leaf("4");
     let leaf5 = Maze::new_leaf("5");
