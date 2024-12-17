@@ -1,5 +1,5 @@
-use std::cell::RefCell;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
+use std::thread;
 
 #[derive(Debug, Clone)]
 enum Exploration {
@@ -8,13 +8,13 @@ enum Exploration {
     Explored,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 enum Maze {
     Branch {
         label: String,
         left: Arc<Maze>,
         right: Arc<Maze>,
-        status: RefCell<Exploration>,
+        status: Mutex<Exploration>, // Utilisation d'un Mutex pour le statut
     },
     Leaf {
         label: String,
@@ -27,7 +27,7 @@ impl Maze {
             label: label.to_string(),
             left,
             right,
-            status: RefCell::new(Exploration::UnExplored),
+            status: Mutex::new(Exploration::UnExplored),
         })
     }
 
@@ -46,30 +46,31 @@ impl Maze {
 
     fn explore(
         self: &Arc<Maze>,
-        work: &mut Vec<Arc<Maze>>,
-        trace: &mut Vec<String>,
+        work: &Arc<Mutex<Vec<Arc<Maze>>>>,
+        trace: &Arc<Mutex<Vec<String>>>,
     ) {
-        match &**self {
+        match self.as_ref() {
             Maze::Branch {
                 label,
                 left,
                 right,
                 status,
             } => {
-                let mut current_status = status.borrow_mut();
+                let mut current_status = status.lock().unwrap();
+
                 match *current_status {
                     Exploration::UnExplored => {
-                        // Passer à PartiallyExplored et empiler la branche
+                        // Passer à PartiallyExplored et empiler les nœuds
                         *current_status = Exploration::PartiallyExplored;
-                        work.push(self.clone());
-                        work.push(left.clone());
-                        trace.push(label.clone());
+                        work.lock().unwrap().push(self.clone());
+                        work.lock().unwrap().push(left.clone());
+                        trace.lock().unwrap().push(label.clone());
                     }
                     Exploration::PartiallyExplored => {
-                        // Passer à Explored et explorer la branche droite
+                        // Passer à Explored et empiler la branche droite
                         *current_status = Exploration::Explored;
-                        work.push(right.clone());
-                        trace.push(label.clone());
+                        work.lock().unwrap().push(right.clone());
+                        trace.lock().unwrap().push(label.clone());
                     }
                     Exploration::Explored => {
                         // Rien à faire si déjà exploré
@@ -78,7 +79,7 @@ impl Maze {
             }
             Maze::Leaf { label } => {
                 // Ajouter la feuille à la trace
-                trace.push(label.clone());
+                trace.lock().unwrap().push(label.clone());
             }
         }
     }
@@ -101,14 +102,31 @@ fn maze() -> Arc<Maze> {
 
 pub fn main() {
     let maze = maze();
-    let mut work = vec![maze.clone()];
-    let mut trace = vec![];
+    let work = Arc::new(Mutex::new(vec![maze.clone()])); // Pile partagée protégée par Mutex
+    let trace = Arc::new(Mutex::new(vec![])); // Trace partagée protégée par Mutex
 
-    while !work.is_empty() {
-        let node = work.pop().expect("work stack should not be empty");
-        node.explore(&mut work, &mut trace);
-        println!("trace so far: {:?}", trace);
+    let mut handles = vec![];
+
+    for _ in 0..4 {
+        let work_clone = Arc::clone(&work);
+        let trace_clone = Arc::clone(&trace);
+
+        let handle = thread::spawn(move || {
+            while let Some(node) = {
+                let mut work_lock = work_clone.lock().unwrap();
+                work_lock.pop()
+            } {
+                node.explore(&work_clone, &trace_clone);
+            }
+        });
+
+        handles.push(handle);
     }
 
-    println!("Final trace: {:?}", trace);
+    for handle in handles {
+        handle.join().unwrap();
+    }
+
+    let final_trace = trace.lock().unwrap();
+    println!("Final trace: {:?}", *final_trace);
 }
