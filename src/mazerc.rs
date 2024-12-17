@@ -13,7 +13,7 @@ enum Maze {
         label: String,
         left: Rc<Maze>,
         right: Rc<Maze>,
-        status: Rc<RefCell<Exploration>>, // Utilisation de RefCell pour rendre `status` mutable
+        status: Rc<RefCell<Exploration>>,
     },
     Leaf { label: String },
 }
@@ -24,7 +24,7 @@ impl Maze {
             label: label.to_string(),
             left,
             right,
-            status: Rc::new(RefCell::new(Exploration::UnExplored)), // Initialisation de `status` avec RefCell
+            status: Rc::new(RefCell::new(Exploration::UnExplored)),
         })
     }
 
@@ -48,14 +48,14 @@ impl Maze {
     ) -> (Vec<Rc<Maze>>, Vec<String>) {
         match &*maze {
             Maze::Branch { label, left, right, status } => {
-                let current_status = status.borrow().clone(); // Emprunt immuable pour lire le status
+                let current_status = status.borrow().clone();
                 match current_status {
                     Exploration::UnExplored => {
                         {
-                            let mut status_mut = status.borrow_mut(); // Emprunt mutable pour changer le status
+                            let mut status_mut = status.borrow_mut();
                             *status_mut = Exploration::Explored;
                         }
-                        // Ajouter le sous-arbre droit à la pile, puis explorer le gauche
+
                         stack.push(right.clone());
                         stack.push(left.clone());
                         labels.push(label.clone());

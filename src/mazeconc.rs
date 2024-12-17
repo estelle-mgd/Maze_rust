@@ -14,7 +14,7 @@ enum Maze {
         label: String,
         left: Arc<Maze>,
         right: Arc<Maze>,
-        status: Mutex<Exploration>, // Utilisation d'un Mutex pour le statut
+        status: Mutex<Exploration>,
     },
     Leaf {
         label: String,
@@ -60,25 +60,24 @@ impl Maze {
 
                 match *current_status {
                     Exploration::UnExplored => {
-                        // Passer à PartiallyExplored et empiler les nœuds
+
                         *current_status = Exploration::PartiallyExplored;
                         work.lock().unwrap().push(self.clone());
                         work.lock().unwrap().push(left.clone());
                         trace.lock().unwrap().push(label.clone());
                     }
                     Exploration::PartiallyExplored => {
-                        // Passer à Explored et empiler la branche droite
+
                         *current_status = Exploration::Explored;
                         work.lock().unwrap().push(right.clone());
                         trace.lock().unwrap().push(label.clone());
                     }
                     Exploration::Explored => {
-                        // Rien à faire si déjà exploré
+                        // Rien à faire
                     }
                 }
             }
             Maze::Leaf { label } => {
-                // Ajouter la feuille à la trace
                 trace.lock().unwrap().push(label.clone());
             }
         }
@@ -102,8 +101,8 @@ fn maze() -> Arc<Maze> {
 
 pub fn main() {
     let maze = maze();
-    let work = Arc::new(Mutex::new(vec![maze.clone()])); // Pile partagée protégée par Mutex
-    let trace = Arc::new(Mutex::new(vec![])); // Trace partagée protégée par Mutex
+    let work = Arc::new(Mutex::new(vec![maze.clone()])); // Pile partagée
+    let trace = Arc::new(Mutex::new(vec![])); // Trace partagée
 
     let mut handles = vec![];
 
