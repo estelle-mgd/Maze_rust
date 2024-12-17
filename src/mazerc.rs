@@ -11,27 +11,27 @@ enum Exploration {
 enum Maze {
     Branch {
         label: String,
-        left: Rc<RefCell<Maze>>,
-        right: Rc<RefCell<Maze>>,
-        status: RefCell<Exploration>,
+        left: Rc<Maze>,
+        right: Rc<Maze>,
+        status: Rc<RefCell<Exploration>>, // Utilisation de RefCell pour rendre `status` mutable
     },
     Leaf { label: String },
 }
 
 impl Maze {
-    fn new_branch(label: &str, left: Rc<RefCell<Maze>>, right: Rc<RefCell<Maze>>) -> Rc<RefCell<Maze>> {
-        Rc::new(RefCell::new(Maze::Branch {
+    fn new_branch(label: &str, left: Rc<Maze>, right: Rc<Maze>) -> Rc<Maze> {
+        Rc::new(Maze::Branch {
             label: label.to_string(),
             left,
             right,
-            status: RefCell::new(Exploration::UnExplored),
-        }))
+            status: Rc::new(RefCell::new(Exploration::UnExplored)), // Initialisation de `status` avec RefCell
+        })
     }
 
-    fn new_leaf(label: &str) -> Rc<RefCell<Maze>> {
-        Rc::new(RefCell::new(Maze::Leaf {
+    fn new_leaf(label: &str) -> Rc<Maze> {
+        Rc::new(Maze::Leaf {
             label: label.to_string(),
-        }))
+        })
     }
 
     fn label(&self) -> String {
@@ -42,17 +42,17 @@ impl Maze {
     }
 
     fn explore(
-        maze: Rc<RefCell<Maze>>,
-        mut stack: Vec<Rc<RefCell<Maze>>>,
+        maze: Rc<Maze>,
+        mut stack: Vec<Rc<Maze>>,
         mut labels: Vec<String>,
-    ) -> (Vec<Rc<RefCell<Maze>>>, Vec<String>) {
-        match &*maze.borrow() {
+    ) -> (Vec<Rc<Maze>>, Vec<String>) {
+        match &*maze {
             Maze::Branch { label, left, right, status } => {
-                let current_status = status.borrow().clone();
+                let current_status = status.borrow().clone(); // Emprunt immuable pour lire le status
                 match current_status {
                     Exploration::UnExplored => {
                         {
-                            let mut status_mut = status.borrow_mut();
+                            let mut status_mut = status.borrow_mut(); // Emprunt mutable pour changer le status
                             *status_mut = Exploration::Explored;
                         }
                         // Ajouter le sous-arbre droit à la pile, puis explorer le gauche
@@ -75,10 +75,10 @@ impl Maze {
     }
 }
 
-fn loop_explore(pair: (Vec<Rc<RefCell<Maze>>>, Vec<String>)) -> (Vec<Rc<RefCell<Maze>>>, Vec<String>) {
+fn loop_explore(pair: (Vec<Rc<Maze>>, Vec<String>)) -> (Vec<Rc<Maze>>, Vec<String>) {
     let (mut stack, mut labels) = pair;
     while let Some(maze) = stack.pop() {
-        println!("Exploring node {}", maze.borrow().label());
+        println!("Exploring node {}", maze.label());
         let (new_stack, new_labels) = Maze::explore(maze, stack, labels);
         stack = new_stack;
         labels = new_labels;
@@ -86,7 +86,7 @@ fn loop_explore(pair: (Vec<Rc<RefCell<Maze>>>, Vec<String>)) -> (Vec<Rc<RefCell<
     (stack, labels)
 }
 
-fn maze() -> Rc<RefCell<Maze>> {
+fn maze() -> Rc<Maze> {
     let leaf2 = Maze::new_leaf("2");
     let leaf4 = Maze::new_leaf("4");
     let leaf5 = Maze::new_leaf("5");
