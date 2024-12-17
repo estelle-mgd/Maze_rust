@@ -15,7 +15,9 @@ enum Maze {
         right: Rc<Maze>,
         status: Rc<RefCell<Exploration>>,
     },
-    Leaf { label: String },
+    Leaf {
+        label: String,
+    },
 }
 
 impl Maze {
@@ -47,7 +49,12 @@ impl Maze {
         mut labels: Vec<String>,
     ) -> (Vec<Rc<Maze>>, Vec<String>) {
         match &*maze {
-            Maze::Branch { label, left, right, status } => {
+            Maze::Branch {
+                label,
+                left,
+                right,
+                status,
+            } => {
                 let current_status = status.borrow().clone();
                 match current_status {
                     Exploration::UnExplored => {
@@ -64,7 +71,7 @@ impl Maze {
                     Exploration::Explored => {
                         labels.push(label.clone());
                         (stack, labels)
-                    },
+                    }
                 }
             }
             Maze::Leaf { label } => {

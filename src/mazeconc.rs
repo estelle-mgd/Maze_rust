@@ -60,20 +60,18 @@ impl Maze {
 
                 match *current_status {
                     Exploration::UnExplored => {
-
                         *current_status = Exploration::PartiallyExplored;
                         work.lock().unwrap().push(self.clone());
                         work.lock().unwrap().push(left.clone());
                         trace.lock().unwrap().push(label.clone());
                     }
                     Exploration::PartiallyExplored => {
-
                         *current_status = Exploration::Explored;
                         work.lock().unwrap().push(right.clone());
                         trace.lock().unwrap().push(label.clone());
                     }
                     Exploration::Explored => {
-                        // Rien à faire
+                        trace.lock().unwrap().push(label.clone());
                     }
                 }
             }
